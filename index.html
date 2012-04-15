@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <script type="text/javascript" charset="utf-8" src="scripts/jquery-1.7.2.js"></script>
+        <script type="text/javascript" charset="utf-8" src="scripts/ICanHaz.js"></script>
+        <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+        <script id="searchResultTemplate" type="text/html">
+            <ul class="unstyled">
+                {{#nodes}}
+                <li><a href="#" onclick="selectNodeIdx({{#idx}}{{/idx}})">{{data.name}}</a>
+                {{/nodes}}
+            </ul>
+        </script>
+        <script id="nodeTemplate" type="text/html">
+            <h4>{{self}}</h4>
+            <ul class="unstyled">
+                <li>name:{{data.name}}</li>
+                <li>filename:{{data.filename}}</li>
+                <li>type:{{data.type}}</li>
+            </ul>
+        </script>
+        <script id="relationshipsTemplate" type="text/html">
+            <h4>{{relationshipsSize}} relation(s)</h4>
+            <ul class="unstyled">
+                {{#relationships}}
+                <li><a href="#" onclick="selectNodeUrl('{{node.self}}')">{{node.data.name}}</a> {{relationCount}} relation(s)</li>
+                {{/relationships}}
+            </ul>
+        </script>
+    </head>
+    <body>
+        <div class="navbar">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="brand" href="#">
+                        Urbanizit
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <form class="well form-search" action="javascript:searchNode()">
+            <input type="text" id="searchName" class="input-medium search-query" placeholder="search">
+        </form>
+
+        <div class="container-fluid">
+            <div class="row-fluid">
+                <div class="span2">
+                    <div id="searchResults"></div>
+                </div>
+                <div class="span10">
+                    <div class="row">
+                        <div class="span4"><div id="relationshipsIn"></div></div>
+                        <div class="span4"><div id="displayNode"></div></div>
+                        <div class="span4"><div id="relationshipsOut"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            var searchResults;
+            var currentNode;
+            var incomingRelationshipsMap = {};
+            var outgoingRelationshipsMap = {};
+
+            function searchNode() {
+                clearSearchResults();
+
+                $.getJSON(
+                    'http://localhost:7474/db/data/index/node/coponentNames?query=name:*' + $("#searchName").val() + '*',
+                    function (data) {
+                        searchResults = data;
+                        var idx = 0;
+                        var resultElement = {
+                            'nodes':data,
+                            'idx':function () {
+                                return function (text, render) {
+                                    return idx++;
+                                }
+                            }
+                        };
+                        var output = ich.searchResultTemplate(resultElement);
+                        $('#searchResults').append(output);
+                    }
+                );
+            }
+
+            function clearSearchResults() {
+                searchResults = null;
+                $("#searchResults").empty();
+            }
+
+            function selectNodeIdx(nodeIdx) {
+                selectNode(searchResults[nodeIdx]);
+            }
+
+            function selectNodeUrl(nodeUrl) {
+                $.getJSON(
+                    nodeUrl,
+                    function (data) {
+                        selectNode(data);
+                    }
+                );
+            }
+
+            function selectNode(node) {
+                currentNode = node;
+                $('#displayNode').empty();
+                var output = ich.nodeTemplate(currentNode);
+                $('#displayNode').append(output);
+
+                //incomnig
+                $.getJSON(
+                    currentNode.incoming_relationships,
+                    function (data) {
+                        var group = groupRelationships(true, data);
+                        incomingRelationships = data;
+                        $('#relationshipsIn').empty();
+                        var output = ich.relationshipsTemplate({
+                            relationshipsSize:data.length,
+                            relationships:group
+                        });
+                        $('#relationshipsIn').append(output);
+                    }
+                );
+                //outgoing
+                $.getJSON(
+                    currentNode.outgoing_relationships,
+                    function (data) {
+                        var group = groupRelationships(false, data);
+                        outgoingRelationships = data;
+                        $('#relationshipsOut').empty();
+                        var output = ich.relationshipsTemplate({
+                            relationshipsSize:data.length,
+                            relationships:group
+                        });
+                        $('#relationshipsOut').append(output);
+                    }
+                );
+            }
+
+            function groupRelationships(byStart, data) {
+                var relationsByNode = {};
+                $.each(data, function(idx, elt) {
+                    var node = byStart ? elt.start : elt.end;
+                    if(!relationsByNode.hasOwnProperty(node)) {
+                        relationsByNode[node] = 1;
+                    } else {
+                        relationsByNode[node] = relationsByNode[node]+1;
+                    }
+                });
+                //convert to array
+                jQuery.ajaxSetup({async:false});
+                var relationsByNodeArray = new Array();
+                var idx = 0;
+                for(node in relationsByNode) {
+                    var nodeObj;
+                    $.getJSON(
+                            node,
+                            function (data) {
+                                relationsByNodeArray[idx]={'node':data, 'relationCount' : relationsByNode[node]};
+                                idx++;
+
+                            }
+                    );
+                }
+                jQuery.ajaxSetup({async:true});
+                return relationsByNodeArray;
+            }
+        </script>
+    </body>
+</html>
