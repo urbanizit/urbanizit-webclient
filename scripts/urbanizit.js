@@ -8,7 +8,7 @@ var Urbanizit = (function () {
             self.clearSearchResults();
 
             $.getJSON(
-                'http://localhost:7474/db/data/index/node/coponentNames?query=name:*' + $("#searchName").val() + '*',
+                'http://localhost:7474/db/data/index/node/componentNames?query=name:*' + $("#searchName").val() + '*',
                 function (data) {
                     self.searchResults = data;
                     var idx = 0;
@@ -50,7 +50,7 @@ var Urbanizit = (function () {
                 function (data) {
                     var group = self.groupRelationships(true, data);
                     $('#relationshipsIn').empty();
-                    var output = ich.relationshipsTemplate({
+                    var output = ich.incomingRelationshipsTemplate({
                         relationshipsSize:data.length,
                         relationships:group
                     });
@@ -63,7 +63,7 @@ var Urbanizit = (function () {
                 function (data) {
                     var group = self.groupRelationships(false, data);
                     $('#relationshipsOut').empty();
-                    var output = ich.relationshipsTemplate({
+                    var output = ich.outgoingRelationshipsTemplate({
                         relationshipsSize:data.length,
                         relationships:group
                     });
@@ -115,13 +115,43 @@ var Urbanizit = (function () {
                 event.preventDefault();
             });
 
-            $("#relationshipsIn").on("click", "li", function(event) {
+            $("#relationshipsIn").on("click", "a", function(event) {
                 self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
             });
 
-            $("#relationshipsOut").on("click", "li", function(event) {
+            $("#relationshipsOut").on("click", "a", function(event) {
                 self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
             });
+
+            $("#relationshipsIn").on("click", "input", function(event) {
+                self.displayRelationships(event.target.dataset.nodeResourceUrl, self.currentNode.self);
+            });
+
+            $("#relationshipsOut").on("click", "input", function(event) {
+                self.displayRelationships(self.currentNode.self,event.target.dataset.nodeResourceUrl);
+            });
+
+        },
+
+        getNodeIdFromResourceUrl:function (url) {
+            var splitedUrl = url.split("/");
+            return splitedUrl[splitedUrl.length-1];
+        },
+
+        displayRelationships:function (urlFrom, urlTo) {
+            var from=self.getNodeIdFromResourceUrl(urlFrom);
+            var to=self.getNodeIdFromResourceUrl(urlTo);
+            var queryGetRelations = "START x  = node("+from+"), n=node("+to+") MATCH x -[r]-> n return r.type?, r.method?";
+            $.post(
+                "http://localhost:7474/db/data/cypher",
+                {"query": queryGetRelations},
+                function(data) {
+                    var output = ich.relTemp({relationships:data.data});
+                    $('#logDiv').empty();
+                    $('#logDiv').append(output);
+                    $('#logDiv').modal();
+                }
+            );
 
         }
 
