@@ -47,15 +47,13 @@
 
 <script id="methodsTemplate" type="text/html">
     <div id="methodsList">
-    {{#relationships}}
-    <table class="table table-condensed">
-        <thead><tr><th>{{type}}</th></tr></thead>
-        <tbody>
-        {{#relations}}
-            <tr><td class="urb-method">{{.}}</td></tr>
-        {{/relations}}
-        </tbody>
-    </table>
+        {{#relationships}}
+        <h5>{{type}}</h5>
+        <ul class="unstyled">
+            {{#relations}}
+                <li class="urb-method">{{.}}
+            {{/relations}}
+        </ul>
     {{/relationships}}
     </div>
 </script>

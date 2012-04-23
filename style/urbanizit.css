@@ -12,7 +12,7 @@ body {
 
 .urb-method {
     white-space: nowrap;
-    width: 80%;
+    width: 100%;
     overflow: hidden;              /* "overflow" value must be different from "visible" */
 
     text-overflow:    ellipsis;
