@@ -2,108 +2,45 @@
 <html>
 <head>
     <title>Urbanizit</title>
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
-
-    <script id="searchResultTemplate" type="text/html">
-        {{#nodes}}<li><a href="#" class="btn btn-mini" data-node-result-idx="{{idx}}">{{data.name}}</a>{{/nodes}}
-    </script>
-
-    <script id="nodeTemplate" type="text/html">
-        <h4>{{self}}</h4>
-        <ul class="unstyled">
-            <li>name:{{data.name}}</li>
-            <li>filename:{{data.filename}}</li>
-            <li>type:{{data.type}}</li>
-        </ul>
-    </script>
-
-    <script id="incomingRelationshipsTemplate" type="text/html">
-        <h4>{{relationshipsSize}} incoming relation(s)</h4>
-        <table class="table table-condensed" id="incomingRelationshipsNodes">
-            <tbody>
-            {{#relationships}}
-            <tr>
-                <td><a href="#" data-node-resource-url="{{node.self}}">{{node.data.name}}</a></td>
-                <td><input type="button" class="btn-mini btn-info" data-node-resource-url="{{node.self}}" value="({{relationCount}})"></td>
-            </tr>
-            {{/relationships}}
-            </tbody>
-        </table>
-    </script>
-
-    <script id="outgoingRelationshipsTemplate" type="text/html">
-        <h4>{{relationshipsSize}} outgoing relation(s)</h4>
-        <table class="table table-condensed" id="outgoingRelationshipsNodes">
-            <tbody>
-            {{#relationships}}
-            <tr>
-                <td><input type="button" class="btn-mini btn-info" data-node-resource-url="{{node.self}}" value="({{relationCount}})"></td>
-                <td><a href="#" data-node-resource-url="{{node.self}}">{{node.data.name}}</a></td>
-            </tr>
-            {{/relationships}}
-            </tbody>
-        </table>
-    </script>
-
-    <script id="relTemp" type="text/html">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">x</a>
-            <h3>Relations</h3>
-        </div>
-        <div class="modal-body">
-            <ul>
-                {{#relationships}}
-                <li>{{0}} ({{1}})
-                {{/relationships}}
-            </ul>
-        </div>
-        <div class="modal-footer">
-            <a class="btn" data-dismiss="modal" href="#">Close</a>
-        </div>
-    </script>
-
+    <link rel="stylesheet" href="./bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./style/urbanizit.css">
 </head>
 <body>
 <div class="navbar">
     <div class="navbar-inner">
         <div class="container">
-            <a class="brand" href="#">Urbanizit</a>
-        </div>
-    </div>
-</div>
-
-<form class="well form-search" id="searchForm">
-    <input type="text" id="searchName" class="input-medium search-query" placeholder="search">
-    <button type="submit" class="btn">Go!</button>
-</form>
-
-<div class="container-fluid">
-    <div class="row-fluid">
-        <div class="span2">
-            <div>
-                <ul id="searchResults" class="unstyled"></ul>
-            </div>
-        </div>
-        <div >
-            <div class="row">
-                <div class="span4">
-                    <div id="relationshipsIn"></div>
-                </div>
-                <div class="span5">
-                    <div id="displayNode"></div>
-                </div>
-                <div class="span4">
-                    <div id="relationshipsOut"></div>
-                </div>
+            <a class="brand"  href="#">Urbanizit</a>
+            <div class="nav-collapse urb-nav-search">
+                <form class="navbar-search pull-left" id="searchForm">
+                    <input type="text" id="searchName" class="input-medium search-query" placeholder="Search">
+                </form>
             </div>
         </div>
     </div>
-    <div id="logDiv" class="modal hide fade" style="display:none;"></div>
 </div>
-<script type="text/javascript" charset="utf-8" src="scripts/jquery-1.7.2.js"></script>
-<script type="text/javascript" charset="utf-8" src="bootstrap/js/bootstrap.js"></script>
-<script type="text/javascript" charset="utf-8" src="bootstrap/js/bootstrap-modal.js"></script>
-<script type="text/javascript" charset="utf-8" src="scripts/ICanHaz.js"></script>
-<script type="text/javascript" charset="utf-8" src="scripts/urbanizit.js"></script>
+<div class="container-fluid urb-content">
+    <div id="searchPane" class="row-fluid">
+        <div class="span12">
+            <ul id="searchResults" class="unstyled"></ul>
+        </div>
+    </div>
+    <div id="mainPane" class="row-fluid">
+        <div class="span12">
+            <div class="row-fluid">
+                <div id="incomingPane" class="span4"></div>
+
+                <div id="focusPane" class="span4"></div>
+
+                <div id="outgoingPane" class="span4"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript" charset="utf-8" src="./scripts/jquery-1.7.2.js"></script>
+<script type="text/javascript" charset="utf-8" src="./bootstrap/js/bootstrap.js"></script>
+<script type="text/javascript" charset="utf-8" src="./bootstrap/js/bootstrap-modal.js"></script>
+<script type="text/javascript" charset="utf-8" src="./scripts/ICanHaz.js"></script>
+<script type="text/javascript" charset="utf-8" src="./scripts/urbanizit.js"></script>
+
 </body>
 </html>

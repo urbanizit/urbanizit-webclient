@@ -1,0 +1,19 @@
+body {
+    background-color: #F1F1F1;
+}
+
+.urb-content {
+    height: 650px;
+}
+
+.urb-nav-search {
+    float: right;
+}
+
+.urb-method {
+    white-space: nowrap;
+    width: 80%;
+    overflow: hidden;              /* "overflow" value must be different from "visible" */
+
+    text-overflow:    ellipsis;
+}

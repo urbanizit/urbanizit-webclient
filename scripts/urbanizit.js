@@ -1,11 +1,9 @@
 var Urbanizit = (function () {
     "use strict";
     var self = {
-        searchResults:null,
-        currentNode:null,
 
         searchNode:function () {
-            self.clearSearchResults();
+            $("#searchResults").empty();
 
             $.getJSON(
                 'http://localhost:7474/db/data/index/node/componentNames?query=name:*' + $("#searchName").val() + '*',
@@ -24,50 +22,44 @@ var Urbanizit = (function () {
             );
         },
 
-        clearSearchResults:function () {
-            self.searchResults = null;
-            $("#searchResults").empty();
-        },
-
-        selectNodeIdx:function (nodeIdx) {
-            self.selectNode(self.searchResults[nodeIdx]);
-        },
-
         selectNodeUrl:function (nodeUrl) {
             $.getJSON(nodeUrl, self.selectNode);
         },
 
         selectNode:function (node) {
-            var output;
-            self.currentNode = node;
-            $('#displayNode').empty();
-            output = ich.nodeTemplate(self.currentNode);
-            $('#displayNode').append(output);
+            $('#focusPane').empty();
+            var output = ich.componentTemplate(node);
+            $('#focusPane').append(output);
+            self.displayNodeIncomingRelationships(node);
+            self.displayNodeOutgoingRelationships(node);
+        },
 
-            //incomnig
+        displayNodeIncomingRelationships: function(node) {
             $.getJSON(
-                self.currentNode.incoming_relationships,
+                node.incoming_relationships,
                 function (data) {
                     var group = self.groupRelationships(true, data);
-                    $('#relationshipsIn').empty();
-                    var output = ich.incomingRelationshipsTemplate({
+                    $('#incomingPane').empty();
+                    var output = ich.incomingComponentRelationshipsTemplate({
                         relationshipsSize:data.length,
                         relationships:group
                     });
-                    $('#relationshipsIn').append(output);
+                    $('#incomingPane').append(output);
                 }
             );
-            //outgoing
+        },
+
+        displayNodeOutgoingRelationships:function(node) {
             $.getJSON(
-                self.currentNode.outgoing_relationships,
+                node.outgoing_relationships,
                 function (data) {
                     var group = self.groupRelationships(false, data);
-                    $('#relationshipsOut').empty();
-                    var output = ich.outgoingRelationshipsTemplate({
+                    $('#outgoingPane').empty();
+                    var output = ich.outgoingComponentRelationshipsTemplate({
                         relationshipsSize:data.length,
                         relationships:group
                     });
-                    $('#relationshipsOut').append(output);
+                    $('#outgoingPane').append(output);
                 }
             );
         },
@@ -76,8 +68,8 @@ var Urbanizit = (function () {
             var relationsByNode = {};
             var relationsByNodeArray = [];
             var idx = 0;
-            var nodeObj;
             var node;
+            var focusNode = byStart ? data[0].end : data[0].start;
 
             $.each(data, function (idx, elt) {
                 node = byStart ? elt.start : elt.end;
@@ -95,7 +87,7 @@ var Urbanizit = (function () {
                 $.getJSON(
                     node,
                     function (data) {
-                        relationsByNodeArray[idx] = {'node':data, 'relationCount':relationsByNode[node]};
+                        relationsByNodeArray[idx] = {'node':data, 'focusNode':focusNode, 'relationCount':relationsByNode[node]};
                         idx++;
                     }
                 );
@@ -104,31 +96,21 @@ var Urbanizit = (function () {
             return relationsByNodeArray;
         },
 
-        init:function () {
-            $("#searchResults").on("click", "li", function(event){
-                self.selectNodeIdx(event.target.dataset.nodeResultIdx);
-            });
+        setSearchPaneDisplay: function(show) {
+            var showSearchPane = (show=='show');
+            if(showSearchPane) {
+                $("#mainPane").hide();
+                $("#searchPane").show();
+            }  else {
+                $("#searchPane").hide();
+                $("#mainPane").show();
+            }
+        },
 
-            $("#searchForm").on("submit", function(event){
-                self.searchNode();
-                //cancel submit
-                event.preventDefault();
-            });
-
-            $("#relationshipsIn").on("click", "a", function(event) {
-                self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
-            });
-
-            $("#relationshipsOut").on("click", "a", function(event) {
-                self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
-            });
-
-            $("#relationshipsIn").on("click", "input", function(event) {
-                self.displayRelationships(event.target.dataset.nodeResourceUrl, self.currentNode.self);
-            });
-
-            $("#relationshipsOut").on("click", "input", function(event) {
-                self.displayRelationships(self.currentNode.self,event.target.dataset.nodeResourceUrl);
+        loadTemplates:function() {
+            $.get("templates/template.html", function(templates){
+                $("head").append(templates);
+                ich.grabTemplates();
             });
 
         },
@@ -146,18 +128,96 @@ var Urbanizit = (function () {
                 "http://localhost:7474/db/data/cypher",
                 {"query": queryGetRelations},
                 function(data) {
-                    var output = ich.relTemp({relationships:data.data});
-                    $('#logDiv').empty();
-                    $('#logDiv').append(output);
-                    $('#logDiv').modal();
+                    var dataJSON;
+                    var type;
+                    var idx=0;
+                    //difference between chromium(return a JSON object) & firefox (return a string)
+                    if(data.data) {
+                        dataJSON = data;
+                    } else {
+                        dataJSON = $.parseJSON(data);
+                    }
+
+                    var relationshipsGroups = {};
+                    //group relations by type
+                    $.each(dataJSON.data, function(index, value) {
+                        if(!relationshipsGroups.hasOwnProperty(value[0])) {
+                            relationshipsGroups[value[0]]=[];
+                        }
+                        relationshipsGroups[value[0]].push(value[1]);
+                    });
+                    //convert the map to an array of objects
+                    var relationshipsObject = [];
+                    for(type in relationshipsGroups) {
+                        relationshipsObject[idx]= {type:type, relations:relationshipsGroups[type]};
+                        idx++;
+                    }
+
+
+                    $('#focusPane').empty();
+                    var output = ich.methodsTemplate({relationships:relationshipsObject});
+                    $('#focusPane').append(output);
                 }
             );
 
+            $.getJSON(
+                urlFrom,
+                function(node) {
+                    $('#incomingPane').empty();
+                    var output = ich.componentTemplate(node);
+                    $('#incomingPane').append(output);
+                });
+            $.getJSON(
+                urlTo,
+                function(node) {
+                    $('#outgoingPane').empty();
+                    var output = ich.componentTemplate(node);
+                    $('#outgoingPane').append(output);
+                });
+        },
+
+        init:function () {
+            self.setSearchPaneDisplay('show');
+            self.loadTemplates();
+
+            $("#searchResults").on("click", "a.urb-node", function(event){
+                self.setSearchPaneDisplay('hide');
+                self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
+            });
+
+            $("#searchForm").on("submit", function(event){
+                self.setSearchPaneDisplay('show');
+                self.searchNode();
+                //cancel submit
+                event.preventDefault();
+            });
+
+            $("#incomingPane").on("click", "a.urb-node", function(event) {
+                self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
+            });
+            $("#incomingPane").on("click", "input.urb-relationships", function(event) {
+                self.displayRelationships(event.target.dataset.nodeResourceUrl, event.target.dataset.nodeFocus);
+            });
+
+            $("#outgoingPane").on("click", "a.urb-node", function(event) {
+                self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
+            });
+            $("#outgoingPane").on("click", "input.urb-relationships", function(event) {
+                self.displayRelationships(event.target.dataset.nodeFocus, event.target.dataset.nodeResourceUrl);
+            });
         }
 
     };
 
     self.init();
+
     return self;
 
 })();
+
+/*
+
+ {"query":"START x  = node(157) MATCH b-[r:USE]->x  WHERE r.type=\"EJB\" AND r.method=\"com.vauban.echange.admin.dto.utilisateur.FonctionsRolesUtilisateur getAuthentication(java.lang.String,java.lang.String)\" return b,r"}
+
+
+    */
