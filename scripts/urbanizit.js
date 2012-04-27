@@ -144,7 +144,7 @@ var Urbanizit = (function () {
                         if(!relationshipsGroups.hasOwnProperty(value[0])) {
                             relationshipsGroups[value[0]]=[];
                         }
-                        relationshipsGroups[value[0]].push(value[1]);
+                        relationshipsGroups[value[0]].push({type:value[0], methodName:value[1]});
                     });
                     //convert the map to an array of objects
                     var relationshipsObject = [];
@@ -176,18 +176,30 @@ var Urbanizit = (function () {
                 });
         },
 
-        displayMethodConsumers:function(nodeUrl, type, method) {
-            var from=self.getNodeIdFromResourceUrl(nodeUrl);
+        displayMethodConsumers:function(type, method) {
+            var from=self.getNodeIdFromResourceUrl($("#outgoingPane .urb-displayNode").data("nodeResourceUrl"));
             var queryGetRelations =
                 " START x = node("+from+")" +
                 " MATCH b-[r:USE]->x" +
                 " WHERE r.type=\""+type+"\" " +
                 " AND r.method=\""+method+"\" " +
-                " return b,r";
+                " return b";
             $.post(
                 "http://localhost:7474/db/data/cypher",
                 {"query": queryGetRelations},
                 function(data) {
+                    var group=[];
+                    $.each(data.data, function(index, value) {
+                        group.push({node:value[0]});
+                    });
+
+
+                    $('#incomingPane').empty();
+                    var output = ich.incomingComponentRelationshipsTemplate({
+                        relationshipsSize:data.length,
+                        relationships:group
+                    });
+                    $('#incomingPane').append(output);
                 }
             );
         },
@@ -216,7 +228,9 @@ var Urbanizit = (function () {
             });
 
             $("#focusPane").on("click", "code", function(event) {
-                self.displayMethodConsumers(event.target.dataset.nodeResourceUrl, event.target.dataset.methodType, event.target.dataset.methodName);
+                $("#focusPane code").each(function() {$(this).css("border", "1px solid #E1E1E8");});
+                $(this).css("border", "2px solid black");
+                self.displayMethodConsumers(event.target.dataset.methodType, event.target.dataset.methodName);
             });
 
             $("#outgoingPane").on("click", "a.urb-node", function(event) {

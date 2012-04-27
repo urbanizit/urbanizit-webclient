@@ -3,7 +3,7 @@
 </script>
 
 <script id="componentTemplate" type="text/html">
-    <div id="displayNode">
+    <div class="urb-displayNode" data-node-resource-url="{{self}}">
         <h4><a href="#" data-node-resource-url="{{self}}" class="urb-node">{{data.name}}</a></h4>
         <ul class="unstyled">
             <li>name:{{data.name}}</li>
@@ -21,7 +21,10 @@
             {{#relationships}}
                 <tr>
                     <td><a href="#" data-node-resource-url="{{node.self}}" class="urb-node">{{node.data.name}}</a></td>
+                    {{#relationCount}}
                     <td><input type="button" class="btn-mini btn-info urb-relationships" data-node-resource-url="{{node.self}}" data-node-focus="{{focusNode}}" value="({{relationCount}})"></td>
+                    {{/relationCount}}
+                    {{^relationCount}}&nbsp;{{/relationCount}}
                 </tr>
             {{/relationships}}
             </tbody>
@@ -47,11 +50,11 @@
 
 <script id="methodsTemplate" type="text/html">
     <div id="methodsList">
-        {{#relationships}}
+    {{#relationships}}
         <h5>{{type}}</h5>
         <ul class="unstyled">
             {{#relations}}
-                <li class="urb-method"><code data-node-resource-url="" data-method-type="{{type}}" data-method-name="{{methodName}}">{{methodName}}</code>
+                <li class="urb-method"><code data-method-type="{{type}}" data-method-name="{{methodName}}">{{methodName}}</code>
             {{/relations}}
         </ul>
     {{/relationships}}
