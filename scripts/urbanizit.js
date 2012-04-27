@@ -176,6 +176,22 @@ var Urbanizit = (function () {
                 });
         },
 
+        displayMethodConsumers:function(nodeUrl, type, method) {
+            var from=self.getNodeIdFromResourceUrl(nodeUrl);
+            var queryGetRelations =
+                " START x = node("+from+")" +
+                " MATCH b-[r:USE]->x" +
+                " WHERE r.type=\""+type+"\" " +
+                " AND r.method=\""+method+"\" " +
+                " return b,r";
+            $.post(
+                "http://localhost:7474/db/data/cypher",
+                {"query": queryGetRelations},
+                function(data) {
+                }
+            );
+        },
+
         init:function () {
             self.setSearchPaneDisplay('show');
             self.loadTemplates();
@@ -199,12 +215,18 @@ var Urbanizit = (function () {
                 self.displayRelationships(event.target.dataset.nodeResourceUrl, event.target.dataset.nodeFocus);
             });
 
+            $("#focusPane").on("click", "code", function(event) {
+                self.displayMethodConsumers(event.target.dataset.nodeResourceUrl, event.target.dataset.methodType, event.target.dataset.methodName);
+            });
+
             $("#outgoingPane").on("click", "a.urb-node", function(event) {
                 self.selectNodeUrl(event.target.dataset.nodeResourceUrl);
             });
             $("#outgoingPane").on("click", "input.urb-relationships", function(event) {
                 self.displayRelationships(event.target.dataset.nodeFocus, event.target.dataset.nodeResourceUrl);
             });
+
+
         }
 
     };
@@ -214,10 +236,3 @@ var Urbanizit = (function () {
     return self;
 
 })();
-
-/*
-
- {"query":"START x  = node(157) MATCH b-[r:USE]->x  WHERE r.type=\"EJB\" AND r.method=\"com.vauban.echange.admin.dto.utilisateur.FonctionsRolesUtilisateur getAuthentication(java.lang.String,java.lang.String)\" return b,r"}
-
-
-    */

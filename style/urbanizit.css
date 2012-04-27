@@ -16,4 +16,5 @@ body {
     overflow: hidden;              /* "overflow" value must be different from "visible" */
 
     text-overflow:    ellipsis;
+    line-height: 22px;
 }
