@@ -13,6 +13,12 @@
     </div>
 </script>
 
+<script id="componentServicesTemplate" type="text/html">
+    <div>
+    {{self}}
+    </div>
+</script>
+
 <script id="incomingComponentRelationshipsTemplate" type="text/html">
     <div id="incomingComponentRelationships">
         <h4>{{relationshipsSize}} incoming relation(s)</h4>
@@ -35,7 +41,7 @@
 <script id="outgoingComponentRelationshipsTemplate" type="text/html">
     <div id="outgoingComponentRelationships">
         <h4>{{relationshipsSize}} outgoing relation(s)</h4>
-        <table class="table table-condensed" id="outgoingRelationshipsNodes">
+          <table class="table table-condensed" id="outgoingRelationshipsNodes">
             <tbody>
             {{#relationships}}
                 <tr>
@@ -51,10 +57,13 @@
 <script id="methodsTemplate" type="text/html">
     <div id="methodsList">
     {{#relationships}}
-        <h5>{{type}}</h5>
         <ul class="unstyled">
             {{#relations}}
-                <li class="urb-method"><code data-method-type="{{type}}" data-method-name="{{methodName}}">{{methodName}}</code>
+                <li class="urb-method">
+                    <code data-method-type="{{type}}" data-method-name="{{methodName}}">
+                        [{{type}}] <abbr title="{{methodName}}" class="initialism" style="text-transform: initial;">
+                        {{methodName}}</abbr>
+                    </code>
             {{/relations}}
         </ul>
     {{/relationships}}

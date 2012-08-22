@@ -30,8 +30,51 @@ var Urbanizit = (function () {
             $('#focusPane').empty();
             var output = ich.componentTemplate(node);
             $('#focusPane').append(output);
+
+            self.displayMethods(node);
             self.displayNodeIncomingRelationships(node);
             self.displayNodeOutgoingRelationships(node);
+        },
+
+        displayMethods : function(node) {
+            var queryGetRelations =
+                ' START to=node('+self.getNodeIdFromResourceUrl(node.self)+')'+
+                ' MATCH from-[r:USE]->to' +
+                ' WHERE r.types<>\'TECHNICAL DEPENDENCY\' ' +
+                ' return r';
+
+            $.post(
+                "http://localhost:7474/db/data/cypher",
+                {"query": queryGetRelations},
+                function(data) {
+                    var dataJSON;
+                    //difference between chromium(return a JSON object) & firefox (return a string)
+                    if(data.data) {
+                        dataJSON = data;
+                    } else {
+                        dataJSON = $.parseJSON(data);
+                    }
+
+
+
+                    var relationsTab=[];
+                    var elt;
+                    var idx =0;
+                    for(elt in dataJSON.data) {
+                        var e = dataJSON.data[elt];
+                        var type = dataJSON.data[elt][0].data.types;
+                        var method = dataJSON.data[elt][0].data.method;
+                        relationsTab[idx]= {type:type, methodName:method};
+                        idx++;
+                    }
+
+                    var relationshipsObject=[];
+                    relationshipsObject[0] = {type:"METHODS", relations : relationsTab};
+
+                    var output = ich.methodsTemplate({relationships:relationshipsObject});
+                    $('#focusPane').append(output);
+                }
+            );
         },
 
         displayNodeIncomingRelationships: function(node) {
@@ -116,14 +159,18 @@ var Urbanizit = (function () {
         },
 
         getNodeIdFromResourceUrl:function (url) {
-            var splitedUrl = url.split("/");
-            return splitedUrl[splitedUrl.length-1];
+            if(url) {
+                var splitedUrl = url.split("/");
+                return splitedUrl[splitedUrl.length-1];
+            } else {
+                return -1;
+            }
         },
 
         displayRelationships:function (urlFrom, urlTo) {
             var from=self.getNodeIdFromResourceUrl(urlFrom);
             var to=self.getNodeIdFromResourceUrl(urlTo);
-            var queryGetRelations = "START x  = node("+from+"), n=node("+to+") MATCH x -[r]-> n return r.type?, r.method?";
+            var queryGetRelations = "START x  = node("+from+"), n=node("+to+") MATCH x -[r]-> n return r.types?, r.method?";
             $.post(
                 "http://localhost:7474/db/data/cypher",
                 {"query": queryGetRelations},
@@ -178,10 +225,12 @@ var Urbanizit = (function () {
 
         displayMethodConsumers:function(type, method) {
             var from=self.getNodeIdFromResourceUrl($("#outgoingPane .urb-displayNode").data("nodeResourceUrl"));
+            if(from===-1)
+                from = self.getNodeIdFromResourceUrl($("#focusPane .urb-displayNode").data("nodeResourceUrl"));
             var queryGetRelations =
                 " START x = node("+from+")" +
                 " MATCH b-[r:USE]->x" +
-                " WHERE r.type=\""+type+"\" " +
+                " WHERE r.types=\""+type+"\" " +
                 " AND r.method=\""+method+"\" " +
                 " return b";
             $.post(
@@ -230,7 +279,9 @@ var Urbanizit = (function () {
             $("#focusPane").on("click", "code", function(event) {
                 $("#focusPane code").each(function() {$(this).css("border", "1px solid #E1E1E8");});
                 $(this).css("border", "2px solid black");
-                self.displayMethodConsumers(event.target.dataset.methodType, event.target.dataset.methodName);
+                if(event.target.dataset.methodType) {
+                    self.displayMethodConsumers(event.target.dataset.methodType, event.target.dataset.methodName);
+                }
             });
 
             $("#outgoingPane").on("click", "a.urb-node", function(event) {
