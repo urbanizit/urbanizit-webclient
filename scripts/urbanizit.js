@@ -2,11 +2,14 @@ var Urbanizit = (function () {
     "use strict";
     var self = {
 
+        graphDB : function() {return "http://localhost:7474/db/data";},
+        cypher : function() {return self.graphDB() + "/cypher";},
+
         searchNode:function () {
             $("#searchResults").empty();
 
             $.getJSON(
-                'http://localhost:7474/db/data/index/node/componentNames?query=name:*' + $("#searchName").val() + '*',
+                self.graphDB() + '/index/node/componentNames?query=name:*' + $("#searchName").val() + '*',
                 function (data) {
                     self.searchResults = data;
                     var idx = 0;
@@ -40,11 +43,11 @@ var Urbanizit = (function () {
             var queryGetRelations =
                 ' START to=node('+self.getNodeIdFromResourceUrl(node.self)+')'+
                 ' MATCH from-[r:USE]->to' +
-                ' WHERE r.types<>\'TECHNICAL DEPENDENCY\' ' +
+                ' WHERE r.type<>\'TECHNICAL DEPENDENCY\' ' +
                 ' return r';
 
             $.post(
-                "http://localhost:7474/db/data/cypher",
+                self.cypher(),
                 {"query": queryGetRelations},
                 function(data) {
                     var dataJSON;
@@ -62,7 +65,7 @@ var Urbanizit = (function () {
                     var idx =0;
                     for(elt in dataJSON.data) {
                         var e = dataJSON.data[elt];
-                        var type = dataJSON.data[elt][0].data.types;
+                        var type = dataJSON.data[elt][0].data.type;
                         var method = dataJSON.data[elt][0].data.method;
                         relationsTab[idx]= {type:type, methodName:method};
                         idx++;
@@ -170,9 +173,9 @@ var Urbanizit = (function () {
         displayRelationships:function (urlFrom, urlTo) {
             var from=self.getNodeIdFromResourceUrl(urlFrom);
             var to=self.getNodeIdFromResourceUrl(urlTo);
-            var queryGetRelations = "START x  = node("+from+"), n=node("+to+") MATCH x -[r]-> n return r.types?, r.method?";
+            var queryGetRelations = "START x  = node("+from+"), n=node("+to+") MATCH x -[r]-> n return r.type?, r.method?";
             $.post(
-                "http://localhost:7474/db/data/cypher",
+                slef.cypher(),
                 {"query": queryGetRelations},
                 function(data) {
                     var dataJSON;
@@ -230,11 +233,11 @@ var Urbanizit = (function () {
             var queryGetRelations =
                 " START x = node("+from+")" +
                 " MATCH b-[r:USE]->x" +
-                " WHERE r.types=\""+type+"\" " +
+                " WHERE r.type=\""+type+"\" " +
                 " AND r.method=\""+method+"\" " +
                 " return b";
             $.post(
-                "http://localhost:7474/db/data/cypher",
+                self.cypher(),
                 {"query": queryGetRelations},
                 function(data) {
                     var group=[];
