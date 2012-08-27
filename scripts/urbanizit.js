@@ -44,7 +44,7 @@ var Urbanizit = (function () {
                 ' START to=node('+self.getNodeIdFromResourceUrl(node.self)+')'+
                 ' MATCH from-[r:USE]->to' +
                 ' WHERE r.type<>\'TECHNICAL DEPENDENCY\' ' +
-                ' return r';
+                ' return distinct r.type, r.method';
 
             $.post(
                 self.cypher(),
@@ -65,8 +65,8 @@ var Urbanizit = (function () {
                     var idx =0;
                     for(elt in dataJSON.data) {
                         var e = dataJSON.data[elt];
-                        var type = dataJSON.data[elt][0].data.type;
-                        var method = dataJSON.data[elt][0].data.method;
+                        var type = e[0];
+                        var method = e[1];
                         relationsTab[idx]= {type:type, methodName:method};
                         idx++;
                     }
@@ -175,7 +175,7 @@ var Urbanizit = (function () {
             var to=self.getNodeIdFromResourceUrl(urlTo);
             var queryGetRelations = "START x  = node("+from+"), n=node("+to+") MATCH x -[r]-> n return r.type?, r.method?";
             $.post(
-                slef.cypher(),
+                self.cypher(),
                 {"query": queryGetRelations},
                 function(data) {
                     var dataJSON;
